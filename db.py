@@ -5,12 +5,6 @@ import sqlite3
 conn = sqlite3.connect('mentoring_platform.db')
 cur = conn.cursor()
 
-
-import sqlite3
-
-conn = sqlite3.connect('mentoring_platform.db')
-cur = conn.cursor()
-
 cur.execute('''
 CREATE TABLE IF NOT EXISTS Person (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

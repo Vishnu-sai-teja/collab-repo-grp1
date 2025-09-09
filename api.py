@@ -1,16 +1,15 @@
 from fastapi import FastAPI
+from schema import MentorRecommendationRequest, MentorsResponse
+from schema import Mentor
 import sqlite3
+import pandas as pd
+from model.train import train
 
 app = FastAPI()
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-from fastapi import FastAPI
-import sqlite3
-
-app = FastAPI()
 
 @app.get("/mentors")
 async def get_mentors():
@@ -46,5 +45,34 @@ async def get_mentors():
     # Return JSON response
     return {"mentors": mentors}
 
+@app.post("/recommend_mentors", response_model=MentorsResponse)
+async def recommend_mentors(filters: MentorRecommendationRequest):
+    conn = sqlite3.connect('mentoring_platform.db')
+    cur = conn.cursor()
 
+    query = """
+        SELECT id, name, age, experience, skillset, organisation, exp_type, sex
+        FROM Person
+        WHERE role = 'mentor'
+    """
 
+    df = pd.read_sql_query(query, conn)
+    print(filters)
+    mentors_list = train(df, filters.dict())
+
+    mentors = [
+        Mentor(
+            id=row["id"],
+            name=row["name"],
+            age=row["age"],
+            experience=row["experience"],
+            skillset=row["skillset"],
+            organisation=row["organisation"],
+            exp_type=row["exp_type"],
+            sex=row["sex"]
+        )
+        for row in mentors_list
+    ]
+    
+    conn.close()
+    return {"mentors": mentors}
